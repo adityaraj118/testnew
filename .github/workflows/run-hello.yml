@@ -1,7 +1,12 @@
 name: Run Hello Script
 
 on:
-  workflow_dispatch:   # enables manual/API trigger
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Message to print"
+        required: true
+        default: "Hello from pipeline!"
 
 jobs:
   run-python:
@@ -15,5 +20,5 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Run hello.py
-        run: python hello.py
+      - name: Run hello.py with input
+        run: python hello.py "${{ github.event.inputs.message }}"
