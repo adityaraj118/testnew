@@ -23,7 +23,7 @@ jobs:
           playwright install
 
       - name: Run Playwright script
-        run: python playwright/ajaxCall.py
+        run: python hello.py "${{ github.event.inputs.message }}"
 
       - name: Upload screenshot
         uses: actions/upload-artifact@v4
