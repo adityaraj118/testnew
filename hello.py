@@ -1,106 +1,110 @@
-from config import *
+import os
 from datetime import datetime
-from playwright.sync_api import sync_playwright
-with sync_playwright() as p:
-    Browser=p.chromium.launch(headless=True)
-    # context = Browser.new_context(
-    #     record_video_dir="videos/",  # folder to store videos
-    #     record_video_size={"width": 1280, "height": 720}  # optional
-    #     )
-    page=Browser.new_page()
-    page.goto("https://bootswatch.com/default/")
-    docs_button=page.get_by_role("button",name="Default button")
-    docs_button.click()
-    heading=page.get_by_role("heading",name="Heading 3").highlight()
-    page.get_by_role("radio",name="Option two can be something else and selecting it will deselect option one").check()
-    
-    page.get_by_label("Default checkbox").check()
-    page.get_by_label("Default checkbox").is_checked()
-    page.wait_for_timeout(5055)
-    # file_input=page.get_by_label("Default file input example")
-    # file_input.set_input_files("example.txt")
+from playwright.sync_api import sync_playwright, expect
 
-    #uncheck
-    #.set_checked(True)
-    #oprion selector 
-    #page.get_by_label("Default file input example").set_input_files("C:\Users\araj1\PycharmProjects\PythonProject\PythonProject\PythonProject\playwright\example.png")
-    # with page.expect_file_chooser() as fc_info:
-    #     page.get_by_label("Default file input example").set_input_files("C:\Users\araj1\PycharmProjects\PythonProject\PythonProject\PythonProject\playwright\example.png")
+def read_inputs(filepath):
+    data = {}
+    with open(filepath, "r") as f:
+        for line in f:
+            if "=" in line:
+                k, v = line.strip().split("=", 1)
+                data[k.strip()] = v.strip()
+    return data
 
-#C:\Users\araj1\PycharmProjects\PythonProject\PythonProject\PythonProject\playwright\example.png
-    page.get_by_label("Example select").select_option("5")
+def makereport(filepath, title, status, count):
+    with open(filepath, "a") as f:
+        f.write(f"\n---TEST CASE {count} ---\n")
+        f.write(f"-> {title} :: {status}\n")
 
-    # DropDown
-    # page.locator("button#btnGrouopDrop1").click()
+def main():
+    dt = datetime.now()
+    date_str = dt.strftime("%Y-%m-%d-%H-%M-%S")
+    report_dir = "Reports"
+    os.makedirs(report_dir, exist_ok=True)
+    report_path = os.path.join(report_dir, f"Demo_Report{date_str}.txt")
+    count = 1
 
+    input_path = os.path.join("Inputs", "Demo_Inputs")
+    data = read_inputs(input_path)
+    name = data.get("name", "")
+    email = data.get("email", "")
+    password = data.get("password", "")
+    state = data.get("state", "")
+    hobbies = [h.strip() for h in data.get("hobbies", "").split(",")]
 
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, slow_mo=2000)
+        page = browser.new_page()
 
-    # option/Select Menu 
+        try:
+            page.goto("https://freelance-learn-automation.vercel.app/login")
+            makereport(report_path, "Launching the application without errors", "PASSED", count)
+            count += 1
 
+            print(page.title())
+            page.locator('xpath=//*[@id="login_container"]/form/div/a').click()
+            page.wait_for_timeout(1000)
+            expect(page.locator('//*[@id="signup_container"]/form/div/h2')).to_contain_text("Sign Up")
+            page.wait_for_timeout(1000)
+            page.locator('xpath=//*[@id="name"]').fill(name)
+            expect(page.locator('xpath=//*[@id="signup_container"]/form/div/button')).to_be_disabled()
+            page.wait_for_timeout(1000)
+            page.locator('xpath=//*[@id="email"]').fill(email)
+            expect(page.locator('xpath=//*[@id="signup_container"]/form/div/button')).to_be_disabled()
+            page.wait_for_timeout(1000)
+            # page.locator('xpath=//*[@id="password"]').fill(password)
+            page.keyboard.press("PageDown")
+            expect(page.locator('xpath=//*[@id="signup_container"]/form/div/button')).to_be_disabled()
+            page.wait_for_timeout(500)
+            page.get_by_text("python").click()
+            page.wait_for_timeout(1000)
+            page.locator('xpath=//*[@id="state"]').select_option(state)
+            page.wait_for_timeout(2000)
+            page.locator('xpath=//*[@id="hobbies"]').select_option(hobbies)
+            # expect(page.locator('xpath=//*[@id="signup_container"]/form/div/button')).to_be_enabled()
 
-    
-    #page.l
-    page.get_by_role("checkbox",name="Default checkbox").check()
-    page.get_by_placeholder("Enter email").type(username , delay=200)
-    #page.get_by_placeholder("Password").type(password)
-    page.get_by_label("Example textarea").fill("Nothing to display")
-    page.wait_for_timeout(3000)
+            if page.locator('xpath=//*[@id="signup_container"]/form/div/button').is_enabled():
+                makereport(report_path, "Filling the form: text,single select,multiselect,radio from the input file", "PASSED", count)
+            else:
+                makereport(report_path, "Looks like some fields are not filled completely", "FAILED", count)
+            count += 1
 
-    #page.get_by_label("Email address").fill("inknkdnkqw")
-    i=page.get_by_label("Valid input").first.input_value()
-    print(i)
-    with open("input_value.txt", "w") as f:
-        f.write(i)
-    page.get_by_text("Small button").click()
-    page.get_by_text("mphasis classes").highlight()
-    page.get_by_title("attribute").highlight()
-    page.locator("css=h1").highlight()
-    page.locator("button.btn-outline-succes")
-    page.locator("button#btnGroupDrop1")  ## for ID 
-    m= page.locator("input[readonly]").first.input_value()  # attribute and value 
-    page.locator("input[value='correct value']").highlight()
-    page.locator("nav.bg-dark a.nav-link.active").highlight()
-    page.locator("h1:text('Navbars)")
-    page.locator("xpath=//h1[@id='navbars]")
-    page.locator("//input[@readonly]").highlight()
-   # page.locator("//input[@value='wrong value]").highlight()
-    page.wait_for_timeout(7777)
+            page.get_by_role("img", name="menu").click()
+            page.get_by_role("link", name="Home").click()
+            page1 = browser.new_page()
+            page1.goto("https://playwright.dev/")
+            page.bring_to_front()
+            page.get_by_role("img", name="menu").click()
+            page.get_by_role("button", name="Log in").click()
+            page1.bring_to_front()
+            page1.locator('xpath=//*[@id="__docusaurus"]/nav/div[1]/div[1]/a[1]/b').click()
+            page1.goto("https://playwright.dev/java/")
+            title = page1.title()
+            username = title.split(" ")[2] if len(title.split(" ")) > 2 else "user"
+            Uemail = f"{username}@gmail.com"
+            print(title, username)
+            page.bring_to_front()
+            page.locator('xpath=//*[@id="email1"]').fill(Uemail)
+            makereport(report_path, "Communicating with multi tabs", "PASSED", count)
+            count += 1
 
+            page.get_by_role("button", name="Sign in").click()
+            snaps_dir = "snaps"
+            os.makedirs(snaps_dir, exist_ok=True)
+            screenshot_path = os.path.join(snaps_dir, f"Demorundate{date_str}.png")
+            page.screenshot(path=screenshot_path, full_page=True)
+            makereport(report_path, "Taking the screenshot", "PASSED", count)
+            count += 1
 
-    print(m)
-    page.goto("https://playwright.dev/python/")
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            makereport(report_path, "ALL TEST CASES", "PASSED", count)
+            page.close()
+            browser.close()
 
-    filename = f"screenshot_{timestamp}.png"
-    page.screenshot(path=filename, full_page=True)
-    print(f"Screenshot saved as: {filename}")
-    # page.get_by_text("Get started").click()
-    # page.click("a[aria-label='GitHub repository']")
-    # page.click("text=Code")
-    # page.click("a[href$='main.zip']")
+        except Exception as e:
+            makereport(report_path, "Code has reached the catch block", "FAILED", count)
+            page.close()
+            browser.close()
+            print(e)
 
-
-
-    # video = page.video
-    # if video:
-    #     path = video.path()
-    #     print(f"Video saved to: {path}")
-
-    # context.close()
-    page.wait_for_timeout(666)
-
-    #Mouse action
-    # page.get_by_role("button",name="Block button").first.highlight()
-    # page.click(button="right")
-    # page.hover()
-    
-
-   # page.get_by_alt_text().highlight()
-
-
-    # page.get_by_label("Password").highlight()
-#     # page.get_by_placeholder("ENter email")
-#     <a class="prc-ActionList-ActionListContent-sg9-x prc-Link-Link-85e08" tabindex="0" aria-labelledby=":rj:--label  " id=":rj:" data-turbo="false" href="/microsoft/playwright-python/archive/refs/heads/main.zip" rel="nofollow">…</a>grid
-# # <span data-component="text" class="prc-Button-Label-pTQ3x">Code</span>
-
-# <a href="https://github.com/microsoft/playwright-python" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link header-github-link" aria-label="GitHub repository">…</a>
+if __name__ == "__main__":
+    main()
