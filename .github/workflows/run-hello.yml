@@ -1,24 +1,30 @@
-name: Run Hello Script
+name: Playwright Python Test
 
 on:
   workflow_dispatch:
-    inputs:
-      message:
-        description: "Message to print"
-        required: true
-        default: "Hello from pipeline!"
 
 jobs:
-  run-python:
+  playwright-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: '3.10'
 
-      - name: Run hello.py with input
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          pip install -r requirements.txt || true  # if you have a requirements.txt
+          playwright install
+
+      - name: Run Playwright script
         run: python hello.py "${{ github.event.inputs.message }}"
+
+
+        
+
