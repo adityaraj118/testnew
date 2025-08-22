@@ -2,7 +2,7 @@ from config import *
 from datetime import datetime
 from playwright.sync_api import sync_playwright
 with sync_playwright() as p:
-    Browser=p.chromium.launch(headless=False)
+    Browser=p.chromium.launch(headless=True)
     # context = Browser.new_context(
     #     record_video_dir="videos/",  # folder to store videos
     #     record_video_size={"width": 1280, "height": 720}  # optional
